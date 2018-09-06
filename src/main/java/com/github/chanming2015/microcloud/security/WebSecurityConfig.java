@@ -3,14 +3,18 @@ package com.github.chanming2015.microcloud.security;
 import javax.annotation.Resource;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 
-import com.github.chanming2015.microcloud.security.service.impl.SecurityService;
-import com.github.chanming2015.microcloud.security.util.SecurityUtil;
+import com.github.chanming2015.microcloud.security.handler.MyAuthenctiationFailureHandler;
+import com.github.chanming2015.microcloud.security.handler.MyAuthenctiationSuccessHandler;
+import com.github.chanming2015.microcloud.security.handler.MyLogoutSuccessHandler;
+import com.github.chanming2015.microcloud.security.service.SecurityService;
 
 /**
  * Description:
@@ -21,9 +25,11 @@ import com.github.chanming2015.microcloud.security.util.SecurityUtil;
 @Configuration
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter
 {
-    private static final String hmackey = "PJMhWeDxlRy5y0J4WY3zTFI4BmqS8BtUOsBxxeiCBoDc4jUhTuTnnXHNhFUSQezU";
     @Resource
     private SecurityService securityService;
+
+    @Resource
+    private MyAuthenctiationSuccessHandler myAuthenctiationSuccessHandler;
 
     @Resource
     public void configGlobal(AuthenticationManagerBuilder auth) throws Exception
@@ -37,10 +43,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter
             {
                 return encodedPassword.equals(encode(rawPassword));
             }
+
             @Override
             public String encode(CharSequence rawPassword)
             {
-                return SecurityUtil.encryptHMACString(hmackey, rawPassword.toString());
+                return rawPassword.toString();
             }
         });
         auth.authenticationProvider(au);
@@ -49,8 +56,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter
     /** @author XuMaoSen
      */
     @Override
-    public void configure(WebSecurity web) throws Exception
+    protected void configure(HttpSecurity http) throws Exception
     {
-        web.ignoring().antMatchers("/v2/api-docs", "/swagger-resources/configuration/ui", "/swagger-resources", "/swagger-resources/configuration/security", "/swagger-ui.html");
+        http.authorizeRequests().anyRequest().authenticated();
+        http.formLogin().successHandler(myAuthenctiationSuccessHandler).failureHandler(new MyAuthenctiationFailureHandler());
+        http.logout().logoutSuccessHandler(new MyLogoutSuccessHandler()).deleteCookies("JSESSIONID").invalidateHttpSession(true);
+        http.exceptionHandling().authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
+        http.csrf().disable();
     }
 }

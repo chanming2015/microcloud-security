@@ -1,4 +1,0 @@
-security:
- sessions: stateless
- basic:
-  enabled: true # 启用SpringSecurity的安全配置项

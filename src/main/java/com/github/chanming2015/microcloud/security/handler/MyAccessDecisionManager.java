@@ -1,4 +1,4 @@
-package com.github.chanming2015.microcloud.security.service.impl;
+package com.github.chanming2015.microcloud.security.handler;
 
 import java.util.Collection;
 import java.util.List;

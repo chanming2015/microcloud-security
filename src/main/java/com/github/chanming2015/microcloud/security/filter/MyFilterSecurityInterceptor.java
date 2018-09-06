@@ -17,7 +17,7 @@ import org.springframework.security.web.FilterInvocation;
 import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource;
 import org.springframework.stereotype.Service;
 
-import com.github.chanming2015.microcloud.security.service.impl.MyAccessDecisionManager;
+import com.github.chanming2015.microcloud.security.handler.MyAccessDecisionManager;
 
 /**
  * Description:

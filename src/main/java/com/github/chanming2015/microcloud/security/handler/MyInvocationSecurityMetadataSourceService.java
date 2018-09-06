@@ -1,4 +1,4 @@
-package com.github.chanming2015.microcloud.security.service.impl;
+package com.github.chanming2015.microcloud.security.handler;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -43,10 +43,22 @@ public class MyInvocationSecurityMetadataSourceService implements FilterInvocati
         List<SystemFunction> functions = systemFunctionRepository.findAll();
         functions.forEach(function ->
         {
-            attributesMap.put(function.getActionUrl(), function.getAttributes());
+            String url = function.getMethod() == null ? function.getActionUrl() : function.getMethod() + " " + function.getActionUrl();
+            attributesMap.put(url, function.getAttributes());
         });
 
-        matchers = attributesMap.keySet().stream().map(url -> new AntPathRequestMatcher(url)).collect(Collectors.toList());
+        matchers = attributesMap.keySet().stream().map(url ->
+        {
+            if (url.startsWith("/"))
+            {
+                return new AntPathRequestMatcher(url);
+            }
+            else
+            {
+                String[] strs = url.split(" ");
+                return new AntPathRequestMatcher(strs[1], strs[0]);
+            }
+        }).collect(Collectors.toList());
     }
 
     /**

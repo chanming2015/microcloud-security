@@ -1,5 +1,8 @@
 package com.github.chanming2015.microcloud.security.service.impl;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -8,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.github.chanming2015.microcloud.security.entity.SystemUser;
 import com.github.chanming2015.microcloud.security.repository.SystemUserRepository;
 import com.github.chanming2015.microcloud.security.service.SystemUserService;
+import com.github.chanming2015.microcloud.security.util.SecurityUtil;
 import com.github.chanming2015.utils.sql.SpecParam;
 import com.github.chanming2015.utils.sql.SpecUtil;
 
@@ -22,6 +26,7 @@ public class SystemUserServiceImpl implements SystemUserService
 {
     @Autowired
     private SystemUserRepository systemUserRepository;
+
     /** @author XuMaoSen
      */
     @Override
@@ -33,9 +38,14 @@ public class SystemUserServiceImpl implements SystemUserService
     /** @author XuMaoSen
      */
     @Override
-    public SystemUser createSystemUser(SystemUser systemUser)
+    public SystemUser createSystemUser(String username, String password)
     {
-        return null;
+        String secretkey = SecurityUtil.randomString(64);
+        SystemUser systemUser = new SystemUser();
+        systemUser.setLoginname(username);
+        systemUser.setPassword(SecurityUtil.encryptAesString(secretkey, password));
+        systemUser.setSecretkey(secretkey);
+        return systemUserRepository.save(systemUser);
     }
 
     /** @author XuMaoSen
@@ -43,14 +53,48 @@ public class SystemUserServiceImpl implements SystemUserService
     @Override
     public SystemUser updateSystemUser(SystemUser systemUser)
     {
-        return null;
+        return systemUserRepository.save(systemUser);
     }
 
     /** @author XuMaoSen
      */
     @Override
-    public Boolean deleteSystemUser(Long id)
+    public Boolean enableSystemUser(Long id, Boolean enable)
     {
-        return null;
+        SystemUser systemUser = systemUserRepository.findOne(id);
+        if (systemUser == null)
+        {
+            return Boolean.FALSE;
+        }
+        else
+        {
+            systemUser.setDeleted(!enable);
+            updateSystemUser(systemUser);
+            return Boolean.TRUE;
+        }
+    }
+
+    /** @author XuMaoSen
+     */
+    @Override
+    public List<Long> getRoleIds(String username)
+    {
+        return findByLoginname(username).getRoles().stream().map(role -> role.getId()).collect(Collectors.toList());
+    }
+
+    /** @author XuMaoSen
+     */
+    @Override
+    public SystemUser findByLoginname(String username)
+    {
+        return systemUserRepository.findByLoginname(username);
+    }
+
+    /** @author XuMaoSen
+     */
+    @Override
+    public SystemUser findOne(Long userId)
+    {
+        return systemUserRepository.findOne(userId);
     }
 }

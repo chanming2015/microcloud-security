@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 import javax.persistence.Column;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Temporal;
@@ -21,6 +22,7 @@ import javax.persistence.Version;
 public abstract class BaseEntity implements Serializable
 {
     @Id
+    @GeneratedValue
     private Long id;
     @Temporal(TemporalType.TIMESTAMP)
     @Column(updatable = false, insertable = false)
