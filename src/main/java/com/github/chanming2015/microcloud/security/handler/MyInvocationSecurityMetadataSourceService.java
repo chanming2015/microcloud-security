@@ -77,7 +77,12 @@ public class MyInvocationSecurityMetadataSourceService implements FilterInvocati
         Optional<AntPathRequestMatcher> optional = matchers.stream().filter(matcher -> matcher.matches(request)).findFirst();
         if (optional.isPresent())
         {
-            result = attributesMap.get(optional.get().getPattern());
+            String method = request.getMethod();
+            result = attributesMap.get(method + " " + optional.get().getPattern());
+            if (result == null)
+            {
+                result = attributesMap.get(optional.get().getPattern());
+            }
         }
         return result;
     }

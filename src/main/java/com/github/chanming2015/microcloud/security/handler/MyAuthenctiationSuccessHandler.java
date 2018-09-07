@@ -38,6 +38,7 @@ public class MyAuthenctiationSuccessHandler extends SimpleUrlAuthenticationSucce
         JSONObject result = new JSONObject();
         result.put("message", "login success");
         String username = request.getParameter("username");
+        result.put("username", username);
         List<Long> roleIds = systemUserService.getRoleIds(username);
         result.put("roleIds", roleIds);
         response.getWriter().write(result.toJSONString());
