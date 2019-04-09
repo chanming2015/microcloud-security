@@ -36,7 +36,8 @@ public class MyAccessDecisionManager implements AccessDecisionManager
         }
         List<String> needRoles = configAttributes.stream().map(ConfigAttribute::getAttribute).collect(Collectors.toList());
         List<String> hadRoles = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList());
-        if (hadRoles.containsAll(needRoles))
+        hadRoles.retainAll(needRoles);
+        if (hadRoles.size() > 0)
         {
             return;
         }
