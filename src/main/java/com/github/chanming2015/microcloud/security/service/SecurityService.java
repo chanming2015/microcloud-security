@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import com.github.chanming2015.microcloud.security.entity.SystemUser;
-import com.github.chanming2015.microcloud.security.util.SecurityUtil;
 
 /**
  * Description:
@@ -52,8 +51,6 @@ public class SecurityService implements UserDetailsService
             throw new UsernameNotFoundException("username not exists");
         }
         List<GrantedAuthority> authorities = systemUser.getRoles().stream().map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList());
-        String password = SecurityUtil.decryptAesString(systemUser.getSecretkey(), systemUser.getPassword());
-        // password = SecurityUtil.encryptHMACString(hmackey, password);
-        return new User(username, password, !systemUser.isDeleted(), true, true, true, authorities);
+        return new User(username, systemUser.getPassword(), !systemUser.isDeleted(), true, true, true, authorities);
     }
 }

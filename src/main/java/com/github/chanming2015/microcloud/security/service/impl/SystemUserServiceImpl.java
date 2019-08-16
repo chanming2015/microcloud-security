@@ -40,11 +40,9 @@ public class SystemUserServiceImpl implements SystemUserService
     @Override
     public SystemUser createSystemUser(String username, String password)
     {
-        String secretkey = SecurityUtil.randomString(64);
         SystemUser systemUser = new SystemUser();
         systemUser.setLoginname(username);
-        systemUser.setPassword(SecurityUtil.encryptAesString(secretkey, password));
-        systemUser.setSecretkey(secretkey);
+        systemUser.setPassword(SecurityUtil.PASSWORD_ENCODER.encode(password));
         return systemUserRepository.save(systemUser);
     }
 

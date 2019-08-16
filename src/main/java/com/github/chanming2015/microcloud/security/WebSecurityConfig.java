@@ -8,13 +8,13 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 
 import com.github.chanming2015.microcloud.security.handler.MyAuthenctiationFailureHandler;
 import com.github.chanming2015.microcloud.security.handler.MyAuthenctiationSuccessHandler;
 import com.github.chanming2015.microcloud.security.handler.MyLogoutSuccessHandler;
 import com.github.chanming2015.microcloud.security.service.SecurityService;
+import com.github.chanming2015.microcloud.security.util.SecurityUtil;
 
 /**
  * Description:
@@ -36,20 +36,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter
     {
         DaoAuthenticationProvider au = new DaoAuthenticationProvider();
         au.setUserDetailsService(securityService);
-        au.setPasswordEncoder(new PasswordEncoder()
-        {
-            @Override
-            public boolean matches(CharSequence rawPassword, String encodedPassword)
-            {
-                return encodedPassword.equals(encode(rawPassword));
-            }
-
-            @Override
-            public String encode(CharSequence rawPassword)
-            {
-                return rawPassword.toString();
-            }
-        });
+        au.setPasswordEncoder(SecurityUtil.PASSWORD_ENCODER);
         auth.authenticationProvider(au);
     }
 
