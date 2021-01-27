@@ -6,6 +6,8 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
 
+import com.github.chanming2015.utils.log.DefaultAopLogger;
+
 @Aspect
 @Component
 public class ServiceAopLogger extends DefaultAopLogger{

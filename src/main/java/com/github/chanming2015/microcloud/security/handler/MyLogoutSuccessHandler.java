@@ -1,16 +1,18 @@
 package com.github.chanming2015.microcloud.security.handler;
 
-import java.io.IOException;
+import java.nio.ByteBuffer;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler;
+import org.springframework.security.web.server.WebFilterExchange;
+import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;
 
 import com.alibaba.fastjson.JSONObject;
+
+import reactor.core.publisher.Mono;
 
 /**
  * Description:
@@ -18,17 +20,17 @@ import com.alibaba.fastjson.JSONObject;
  * @author XuMaoSen
  * Version:1.0.0
  */
-public class MyLogoutSuccessHandler extends SimpleUrlLogoutSuccessHandler
+public class MyLogoutSuccessHandler implements ServerLogoutSuccessHandler
 {
-    /** @author XuMaoSen
-     */
     @Override
-    public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException
+    public Mono<Void> onLogoutSuccess(WebFilterExchange exchange, Authentication authentication)
     {
-        response.setStatus(HttpStatus.OK.value());
-        response.setContentType("application/json;charset=UTF-8");
-        JSONObject result = new JSONObject();
+        ServerHttpResponse response = exchange.getExchange().getResponse();
+        response.setStatusCode(HttpStatus.OK);
+        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+        JSONObject result = new JSONObject(2);
         result.put("message", "logout success");
-        response.getWriter().write(result.toJSONString());
+        DataBuffer buffer = response.bufferFactory().wrap(ByteBuffer.wrap(JSONObject.toJSONBytes(result)));
+        return response.writeWith(Mono.just(buffer));
     }
 }

@@ -1,20 +1,22 @@
 package com.github.chanming2015.microcloud.security.handler;
 
-import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.List;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
+import org.springframework.security.web.server.WebFilterExchange;
+import org.springframework.security.web.server.authentication.ServerAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSONObject;
 import com.github.chanming2015.microcloud.security.service.SystemUserService;
+
+import reactor.core.publisher.Mono;
 
 /**
  * Description:
@@ -23,7 +25,7 @@ import com.github.chanming2015.microcloud.security.service.SystemUserService;
  * Version:1.0.0
  */
 @Component
-public class MyAuthenctiationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler
+public class MyAuthenctiationSuccessHandler implements ServerAuthenticationSuccessHandler
 {
     @Autowired
     private SystemUserService systemUserService;
@@ -31,16 +33,18 @@ public class MyAuthenctiationSuccessHandler extends SimpleUrlAuthenticationSucce
     /** @author XuMaoSen
      */
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException
+    public Mono<Void> onAuthenticationSuccess(WebFilterExchange webFilterExchange, Authentication authentication)
     {
-        response.setStatus(HttpStatus.OK.value());
-        response.setContentType("application/json;charset=UTF-8");
-        JSONObject result = new JSONObject();
+        ServerHttpResponse response = webFilterExchange.getExchange().getResponse();
+        response.setStatusCode(HttpStatus.OK);
+        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+        JSONObject result = new JSONObject(4);
         result.put("message", "login success");
-        String username = request.getParameter("username");
+        String username = authentication.getName();
         result.put("username", username);
         List<Long> roleIds = systemUserService.getRoleIds(username);
         result.put("roleIds", roleIds);
-        response.getWriter().write(result.toJSONString());
+        DataBuffer buffer = response.bufferFactory().wrap(ByteBuffer.wrap(JSONObject.toJSONBytes(result)));
+        return response.writeWith(Mono.just(buffer));
     }
 }

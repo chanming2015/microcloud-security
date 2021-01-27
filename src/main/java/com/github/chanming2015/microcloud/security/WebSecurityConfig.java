@@ -1,19 +1,18 @@
 package com.github.chanming2015.microcloud.security;
 
-import javax.annotation.Resource;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.authentication.HttpStatusServerEntryPoint;
 
+import com.github.chanming2015.microcloud.security.handler.MyAccessDecisionManager;
 import com.github.chanming2015.microcloud.security.handler.MyAuthenctiationFailureHandler;
 import com.github.chanming2015.microcloud.security.handler.MyAuthenctiationSuccessHandler;
 import com.github.chanming2015.microcloud.security.handler.MyLogoutSuccessHandler;
-import com.github.chanming2015.microcloud.security.service.SecurityService;
 import com.github.chanming2015.microcloud.security.util.SecurityUtil;
 
 /**
@@ -22,33 +21,32 @@ import com.github.chanming2015.microcloud.security.util.SecurityUtil;
  * @author XuMaoSen
  * Version:1.0.0
  */
-@EnableWebSecurity
-public class WebSecurityConfig extends WebSecurityConfigurerAdapter
+@Configuration
+public class WebSecurityConfig
 {
-    @Resource
-    private SecurityService securityService;
-
-    @Resource
+    @Autowired
     private MyAuthenctiationSuccessHandler myAuthenctiationSuccessHandler;
 
-    @Resource
-    public void configGlobal(AuthenticationManagerBuilder auth) throws Exception
+    @Autowired
+    private MyAccessDecisionManager myAccessDecisionManager;
+
+    /**
+     * 密码加密工具
+     * @return
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder()
     {
-        DaoAuthenticationProvider au = new DaoAuthenticationProvider();
-        au.setUserDetailsService(securityService);
-        au.setPasswordEncoder(SecurityUtil.PASSWORD_ENCODER);
-        auth.authenticationProvider(au);
+        return SecurityUtil.PASSWORD_ENCODER;
     }
 
-    /** @author XuMaoSen
-     */
-    @Override
-    protected void configure(HttpSecurity http) throws Exception
+    @Bean
+    SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http)
     {
-        http.authorizeRequests().anyRequest().authenticated();
-        http.formLogin().successHandler(myAuthenctiationSuccessHandler).failureHandler(new MyAuthenctiationFailureHandler());
-        http.logout().logoutSuccessHandler(new MyLogoutSuccessHandler()).deleteCookies("JSESSIONID").invalidateHttpSession(true);
-        http.exceptionHandling().authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED));
-        http.csrf().disable();
+        http.formLogin().authenticationSuccessHandler(myAuthenctiationSuccessHandler).authenticationFailureHandler(new MyAuthenctiationFailureHandler());
+        http.logout().logoutSuccessHandler(new MyLogoutSuccessHandler());
+        http.exceptionHandling().authenticationEntryPoint(new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED));
+        http.authorizeExchange().anyExchange().access(myAccessDecisionManager);
+        return http.csrf().disable().build();
     }
 }

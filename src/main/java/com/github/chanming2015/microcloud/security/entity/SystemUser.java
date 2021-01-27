@@ -2,23 +2,27 @@ package com.github.chanming2015.microcloud.security.entity;
 
 import java.util.Set;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.OneToMany;
 
 /**
- * Description:
- * Create Date:2018年8月29日
+ * Description: 系统用户 <br/> 
+ * Create Date:2018年8月29日  <br/> 
+ * Version:1.0.0  <br/> 
  * @author XuMaoSen
- * Version:1.0.0
  */
 @Entity
 public class SystemUser extends BaseEntity
 {
     private static final long serialVersionUID = -1819900863679785803L;
+    @Column(unique = true, updatable = false, nullable = false)
     private String loginname; // 用户名
-    private String password; // 密码
+    @Column(nullable = false)
+    private String password; // 密码，数据库中保存密文
+    @Column(updatable = false, nullable = false)
     private String secretkey; // 密钥
 
     @OneToMany

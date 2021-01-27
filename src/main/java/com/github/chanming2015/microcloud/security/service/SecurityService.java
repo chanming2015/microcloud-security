@@ -1,20 +1,19 @@
 package com.github.chanming2015.microcloud.security.service;
 
-import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
-import com.github.chanming2015.microcloud.security.entity.SystemUser;
+import com.github.chanming2015.microcloud.security.resp.RespUser;
+import com.github.chanming2015.utils.pojo.DataResult;
+
+import reactor.core.publisher.Mono;
 
 /**
  * Description:
@@ -23,34 +22,15 @@ import com.github.chanming2015.microcloud.security.entity.SystemUser;
  * Version:1.0.0
  */
 @Service
-public class SecurityService implements UserDetailsService
+public class SecurityService implements ReactiveUserDetailsService
 {
     @Autowired
     private SystemUserService systemUserService;
 
-    @Value("${hmac.key}")
-    private String hmackey;
-
-    public String getHmackey()
-    {
-        return hmackey;
-    }
-
-    /** @author XuMaoSen
-     */
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException
+    public Mono<UserDetails> findByUsername(String username)
     {
-        if (StringUtils.isEmpty(username))
-        {
-            throw new UsernameNotFoundException("username not exists");
-        }
-        SystemUser systemUser = systemUserService.findByLoginname(username);
-        if (systemUser == null)
-        {
-            throw new UsernameNotFoundException("username not exists");
-        }
-        List<GrantedAuthority> authorities = systemUser.getRoles().stream().map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList());
-        return new User(username, systemUser.getPassword(), !systemUser.isDeleted(), true, true, true, authorities);
+        DataResult<RespUser> dataResult = systemUserService.findByLoginname(username);
+        return Mono.justOrEmpty(dataResult.getResult()).switchIfEmpty(Mono.error(() -> new UsernameNotFoundException(String.format("username %s not exists", username)))).map(systemUser -> new User(username, systemUser.getPassword(), !systemUser.isDeleted(), true, true, true, systemUser.getRespRoles().stream().map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList())));
     }
 }
